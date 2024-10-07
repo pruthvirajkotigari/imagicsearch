@@ -1,11 +1,10 @@
 import mlflow
 import argparse
-from typing import Union
+from util import load_configs
 import pyspark.sql.functions as f
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrameReader
 from pyspark.sql.avro.functions import from_avro
 from pyspark.sql.types import ArrayType, DoubleType
-from pyspark.sql.streaming import DataStreamReader, DataStreamWriter
 
 
 def load_model_udf(_spark: SparkSession, path: str):
@@ -18,20 +17,6 @@ parser.add_argument("-m", "--model_uri", dest="model_uri", default="../model/mlf
 parser.add_argument("-kp", "--kafka_props", dest="kafka_props_path", default="../kafka/local.properties", type=str)
 parser.add_argument("-ep", "--es_props", dest="es_props_path", default="../elasticsearch/local.properties", type=str)
 args = parser.parse_args()
-
-
-def load_configs(path: str, stream: Union[DataStreamReader, DataStreamWriter]):
-    with open(path, 'r') as file:
-        for line in file:
-            line = line.strip().split("=")
-            key, value = line[0], line[1]
-
-            if path.find("kafka"):
-                key = f"kafka.{key}"
-
-            stream = stream.option(key, value)
-
-    return stream
 
 
 if __name__ == "__main__":
@@ -71,7 +56,10 @@ if __name__ == "__main__":
                 f.concat(f.lit("https://farm66.staticflickr.com/"), f.col("value.imgUrl"))
             ).alias("image_emb")
         )
+        .filter(f.col("image_emb")[0].isNull())
     )
+
+    # img_emb_df.show(truncate=False)
 
     es_stream_sink = load_configs(
         args.es_props_path,
@@ -90,17 +78,5 @@ if __name__ == "__main__":
         .trigger(processingTime="1 minute")
         .start()
     )
-
-    # write to json for testing
-    # query = (
-    #     img_emb_df.writeStream
-    #     .format("json")
-    #     .queryName("Image embedding extractor")
-    #     .outputMode("append")
-    #     .option("path", "output")
-    #     .option("checkpointLocation", "chk-point-dir/img_emb_extractor")
-    #     .trigger(processingTime="1 minute")
-    #     .start()
-    # )
 
     query.awaitTermination()

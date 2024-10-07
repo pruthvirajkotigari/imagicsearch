@@ -1,4 +1,4 @@
-# Image-Search-Engine
+# Cross-Lingual Image Search Engine
 
 This repo contains an end-to-end implementation of an image search engine application.
 It is a rough simulation of a real world implementation and contains various modules, which are as follows
@@ -65,3 +65,6 @@ The results as a whole display the capability of the model to carry out cross do
 5. [HuggingFace transformers](https://huggingface.co/)
 6. [Reactjs](https://react.dev/)
 
+Please consider staring the repo if you find this repo to be useful.
+
+Feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/basava-sai-naga-viswa-chaitanya-665083172/).
